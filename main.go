@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
-	phonedb "github.com/gophercises/phone/db"
+	phonedb "github.com/NicholasTallis/Gophercises_Phone/db"
 
 	_ "github.com/lib/pq"
 )
@@ -12,8 +12,8 @@ import (
 const (
 	host     = "localhost"
 	port     = 5432
-	user     = "jon"
-	password = "your-password"
+	user     = "nicholas"
+	password = "password"
 	dbname   = "gophercises_phone"
 )
 
