@@ -164,3 +164,6 @@ func getPhone(db *sql.DB, id int) (string, error) {
 	}
 	return number, nil
 }
+func foo() {
+	println("Test for db package")
+}
