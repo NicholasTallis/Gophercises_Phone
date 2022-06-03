@@ -3,10 +3,8 @@ package main
 import (
 	"database/sql"
 	"log"
-	"os"
 	"regexp"
 	"strings"
-	"time"
 
 	"github.com/golift/imessage"
 	_ "github.com/golift/imessage"
@@ -22,93 +20,28 @@ const (
 )
 
 func main() {
-
-	println("Beginning")
-	iChatDBLocation := "/Users/nicholas/Library/Messages/chat.db"
-	//iChatDBLocation := "/Users/nicholas/Desktop/chat.db"
-	c := &imessage.Config{
-		SQLPath:   iChatDBLocation,                               // Set this correctly
-		QueueSize: 10,                                            // 10-20 is fine. If your server is super busy, tune this.
-		Retries:   3,                                             // run the applescript up to this many times to send a message. 3 works well.
-		DebugLog:  log.New(os.Stdout, "[DEBUG] ", log.LstdFlags), // Log debug messages.
-		ErrorLog:  log.New(os.Stderr, "[ERROR] ", log.LstdFlags), // Log errors.
-	}
-	s, err := imessage.Init(c)
-	checkErr(err)
-
-	done := make(chan imessage.Incoming) // Make a channel to receive incoming messages.
-	s.IncomingChan(".*", done)           // Bind to all incoming messages.
-	err = s.Start()                      // Start outgoing and incoming message go routines.
-	checkErr(err)
-	log.Print("waiting for msgs")
-	//s.Send(imessage.Outgoing{Text: "no help for you", To: "+12038327601"})
-	//ch := make(chan int)
-	var end bool = false
-	foo := func() {
-		for msg := range done { // wait here for messages to come in.
-			if end {
-				break
-			}
-			if len(msg.Text) < 60 {
-				log.Println("id:", msg.RowID, "from:", msg.From, "attachment?", msg.File, "msg:", msg.Text)
-			} else {
-				log.Println("id:", msg.RowID, "from:", msg.From, "length:", len(msg.Text))
-			}
-			if strings.HasPrefix(msg.Text, "Help") {
-				// Reply to any incoming message that has the word "Help" as the first word.
-				s.Send(imessage.Outgoing{Text: "no help for you", To: msg.From})
-			}
-			if strings.HasPrefix(msg.Text, "test") {
-				s.Send(imessage.Outgoing{Text: "Auto Reply", To: msg.From})
-			}
-			if strings.HasPrefix(msg.Text, "Test") {
-				s.Send(imessage.Outgoing{Text: "Auto Reply 2", To: msg.From})
-			}
-		}
-	}
-	go foo()
-	time.Sleep(10 * time.Second)
-	println("10 seconds passed")
-	end = true
-
-	//s.Send(imessage.Outgoing{Text: "no help for you", To: "+12038327601"})
-	//println("Should have sent")
-	/*
-		psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s sslmode=disable", host, port, user, password)
-		must(phonedb.Reset("postgres", psqlInfo, dbname))
-
-		psqlInfo = fmt.Sprintf("%s dbname=%s", psqlInfo, dbname)
-		must(phonedb.Migrate("postgres", psqlInfo))
-
-		db, err := phonedb.Open("postgres", psqlInfo)
-		must(err)
-		defer db.Close()
-
-		err = db.Seed()
-		must(err)
-
-		phones, err := db.AllPhones()
-		must(err)
-		for _, p := range phones {
-			fmt.Printf("Working on... %+v\n", p)
-			number := normalize(p.Number)
-			if number != p.Number {
-				fmt.Println("Updating or removing...", number)
-				existing, err := db.FindPhone(number)
-				must(err)
-				if existing != nil {
-					must(db.DeletePhone(p.ID))
-				} else {
-					p.Number = number
-					must(db.UpdatePhone(&p))
-				}
-			} else {
-				fmt.Println("No changes required")
-			}
-		}
-	*/
+	println("Test")
 }
+func messageRoutine(s *imessage.Messages, done chan imessage.Incoming, end *bool) {
+	for msg := range done { // wait here for messages to come in.
+		if len(msg.Text) < 60 {
+			log.Println("id:", msg.RowID, "from:", msg.From, "attachment?", msg.File, "msg:", msg.Text)
+		} else {
+			log.Println("id:", msg.RowID, "from:", msg.From, "length:", len(msg.Text))
+		}
+		if strings.HasPrefix(msg.Text, "Help") {
+			// Reply to any incoming message that has the word "Help" as the first word.
+			s.Send(imessage.Outgoing{Text: "no help for you", To: msg.From})
+		}
+		if strings.HasPrefix(msg.Text, "test") {
+			s.Send(imessage.Outgoing{Text: "Auto Reply", To: msg.From})
+		}
+		if strings.HasPrefix(msg.Text, "Test") {
+			s.Send(imessage.Outgoing{Text: "Auto Reply 2", To: msg.From})
+		}
+	}
 
+}
 func must(err error) {
 	if err != nil {
 		panic(err)
