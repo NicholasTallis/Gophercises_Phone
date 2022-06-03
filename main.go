@@ -6,6 +6,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/golift/imessage"
 	_ "github.com/golift/imessage"
@@ -40,24 +41,35 @@ func main() {
 	err = s.Start()                      // Start outgoing and incoming message go routines.
 	checkErr(err)
 	log.Print("waiting for msgs")
-
-	for msg := range done { // wait here for messages to come in.
-		if len(msg.Text) < 60 {
-			log.Println("id:", msg.RowID, "from:", msg.From, "attachment?", msg.File, "msg:", msg.Text)
-		} else {
-			log.Println("id:", msg.RowID, "from:", msg.From, "length:", len(msg.Text))
-		}
-		if strings.HasPrefix(msg.Text, "Help") {
-			// Reply to any incoming message that has the word "Help" as the first word.
-			s.Send(imessage.Outgoing{Text: "no help for you", To: msg.From})
-		}
-		if strings.HasPrefix(msg.Text, "test") {
-			s.Send(imessage.Outgoing{Text: "Auto Reply", To: msg.From})
-		}
-		if strings.HasPrefix(msg.Text, "Test") {
-			s.Send(imessage.Outgoing{Text: "Auto Reply 2", To: msg.From})
+	//s.Send(imessage.Outgoing{Text: "no help for you", To: "+12038327601"})
+	//ch := make(chan int)
+	var end bool = false
+	foo := func() {
+		for msg := range done { // wait here for messages to come in.
+			if end {
+				break
+			}
+			if len(msg.Text) < 60 {
+				log.Println("id:", msg.RowID, "from:", msg.From, "attachment?", msg.File, "msg:", msg.Text)
+			} else {
+				log.Println("id:", msg.RowID, "from:", msg.From, "length:", len(msg.Text))
+			}
+			if strings.HasPrefix(msg.Text, "Help") {
+				// Reply to any incoming message that has the word "Help" as the first word.
+				s.Send(imessage.Outgoing{Text: "no help for you", To: msg.From})
+			}
+			if strings.HasPrefix(msg.Text, "test") {
+				s.Send(imessage.Outgoing{Text: "Auto Reply", To: msg.From})
+			}
+			if strings.HasPrefix(msg.Text, "Test") {
+				s.Send(imessage.Outgoing{Text: "Auto Reply 2", To: msg.From})
+			}
 		}
 	}
+	go foo()
+	time.Sleep(10 * time.Second)
+	println("10 seconds passed")
+	end = true
 
 	//s.Send(imessage.Outgoing{Text: "no help for you", To: "+12038327601"})
 	//println("Should have sent")
