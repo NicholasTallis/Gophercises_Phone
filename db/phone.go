@@ -6,6 +6,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
+//Updated!!!
 // Phone represents the phone_numbers table in the DB
 type Phone struct {
 	ID     int
