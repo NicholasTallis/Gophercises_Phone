@@ -9,8 +9,8 @@ import (
 //Updated!!!
 // Phone represents the phone_numbers table in the DB
 type Phone struct {
-	ID     int
 	Number string
+	ID     int
 }
 
 func Open(driverName, dataSource string) (*DB, error) {
@@ -29,29 +29,21 @@ func (db *DB) Close() error {
 	return db.db.Close()
 }
 
-func (db *DB) Seed() error {
-	data := []string{
-		"1234567890",
-		"123 456 7891",
-		"(123) 456 7892",
-		"(123) 456-7893",
-		"123-456-7894",
-		"123-456-7890",
-		"1234567892",
-		"(123)456-7892",
-	}
-	for _, number := range data {
-		if _, err := insertPhone(db.db, number); err != nil {
-			return err
+func (db *DB) Seed2(data, ids []string) error {
+	if len(data) == len(ids) {
+		for i := range data {
+			if _, err := insertPhone2(db.db, data[i], ids[i]); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
 }
 
-func insertPhone(db *sql.DB, phone string) (int, error) {
-	statement := `INSERT INTO phone_numbers(value) VALUES($1) RETURNING id`
+func insertPhone2(db *sql.DB, phone string, groupid string) (int, error) {
+	statement := `INSERT INTO public.numbers(num,groupid) VALUES($1,$2) RETURNING groupid`
 	var id int
-	err := db.QueryRow(statement, phone).Scan(&id)
+	err := db.QueryRow(statement, phone, groupid).Scan(&id)
 	if err != nil {
 		return -1, err
 	}
@@ -59,7 +51,7 @@ func insertPhone(db *sql.DB, phone string) (int, error) {
 }
 
 func (db *DB) AllPhones() ([]Phone, error) {
-	rows, err := db.db.Query("SELECT id, value FROM phone_numbers")
+	rows, err := db.db.Query("SELECT num, groupid FROM numbers ORDER BY groupid")
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +60,7 @@ func (db *DB) AllPhones() ([]Phone, error) {
 	var ret []Phone
 	for rows.Next() {
 		var p Phone
-		if err := rows.Scan(&p.ID, &p.Number); err != nil {
+		if err := rows.Scan(&p.Number, &p.ID); err != nil {
 			return nil, err
 		}
 		ret = append(ret, p)
@@ -81,8 +73,8 @@ func (db *DB) AllPhones() ([]Phone, error) {
 
 func (db *DB) FindPhone(number string) (*Phone, error) {
 	var p Phone
-	row := db.db.QueryRow("SELECT * FROM phone_numbers WHERE value=$1", number)
-	err := row.Scan(&p.ID, &p.Number)
+	row := db.db.QueryRow("SELECT * FROM numbers WHERE num=$1", number)
+	err := row.Scan(&p.Number, &p.ID)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil
@@ -93,15 +85,15 @@ func (db *DB) FindPhone(number string) (*Phone, error) {
 	return &p, nil
 }
 
-func (db *DB) UpdatePhone(p *Phone) error {
-	statement := `UPDATE phone_numbers SET value=$2 WHERE id=$1`
-	_, err := db.db.Exec(statement, p.ID, p.Number)
+func (db *DB) UpdatePhone(p *Phone, newNum string) error {
+	statement := `UPDATE numbers SET num=$2 WHERE num=$1`
+	_, err := db.db.Exec(statement, p.Number, newNum)
 	return err
 }
 
-func (db *DB) DeletePhone(id int) error {
-	statement := `DELETE FROM phone_numbers WHERE id=$1`
-	_, err := db.db.Exec(statement, id)
+func (db *DB) DeletePhone(p *Phone) error {
+	statement := `DELETE FROM numbers WHERE num=$1`
+	_, err := db.db.Exec(statement, p.Number)
 	return err
 }
 
@@ -119,9 +111,9 @@ func Migrate(driverName, dataSource string) error {
 
 func createPhoneNumbersTable(db *sql.DB) error {
 	statement := `
-    CREATE TABLE IF NOT EXISTS phone_numbers (
-      id SERIAL,
-      value VARCHAR(255)
+    CREATE TABLE IF NOT EXISTS numbers (
+      num varchar(40),
+      groupid integer
     )`
 	_, err := db.Exec(statement)
 	return err
@@ -170,4 +162,5 @@ func Foo() {
 }
 func Foo3() {
 	println("Test3 for db package")
+	println("Test4!")
 }
