@@ -70,6 +70,27 @@ func (db *DB) AllPhones() ([]Phone, error) {
 	}
 	return ret, nil
 }
+func (db *DB) GroupPhones(groupid string) ([]Phone, error) {
+	rows, err := db.db.Query("SELECT num, groupid FROM numbers WHERE groupid=$1", groupid)
+	//rows, err := db.db.Query("SELECT * FROM numbers")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ret []Phone
+	for rows.Next() {
+		var p Phone
+		if err := rows.Scan(&p.Number, &p.ID); err != nil {
+			return nil, err
+		}
+		ret = append(ret, p)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
 
 func (db *DB) FindPhone(number string) (*Phone, error) {
 	var p Phone
